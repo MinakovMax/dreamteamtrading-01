@@ -283,16 +283,16 @@ class TickConvertor:
         start_datetime = dt.datetime.strptime(date_start + time_start, '%Y%m%d%H%M%S')
         end_datetime = dt.datetime.strptime(date_end + time_end, '%Y%m%d%H%M%S')
 
-        Tiks = pd.read_csv(file_path) # Файл должен находиться в корневой папке
-        Candles = pd.DataFrame()
+        tiks = pd.read_csv(file_path) # Файл должен находиться в корневой папке
+        candles = pd.DataFrame()
 
         # проверяем входные даты
 
-        temp_start_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].loc[0]) + str(Tiks['<TIME>'].loc[0]), '%Y%m%d%H%M%S')
-        temp_end_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].iloc[-1]) + str(Tiks['<TIME>'].iloc[-1]), '%Y%m%d%H%M%S')
+        temp_start_datetime = dt.datetime.strptime(str(tiks['<DATE>'].loc[0]) + str(tiks['<TIME>'].loc[0]), '%Y%m%d%H%M%S')
+        temp_end_datetime = dt.datetime.strptime(str(tiks['<DATE>'].iloc[-1]) + str(tiks['<TIME>'].iloc[-1]), '%Y%m%d%H%M%S')
 
         if (start_datetime > temp_end_datetime) or (end_datetime < temp_start_datetime):
-            return Candles
+            return candles
             
         if start_datetime < temp_start_datetime:
             start_datetime = temp_start_datetime
@@ -381,7 +381,6 @@ class TickConvertor:
         agg['volume'] = agg['volume'].astype(int)
         agg['buy_volume'] = agg['buy_volume'].astype(int)
         agg['sell_volume'] = agg['sell_volume'].astype(int)
-        #agg['sell_tick_count'] = agg['sell_tick_count'].astype(int)
 
         agg = TickConvertor.__cut_lines(agg, start_session_time, end_session_time)    
         
@@ -395,9 +394,9 @@ class TickConvertor:
         if N == 1:
             return TickConvertor.__tick_to_seconds(file_path, date_start, time_start, date_end, time_end, start_session_time, end_session_time)
         elif N > 1:
-            Candles = TickConvertor.__tick_to_seconds(file_path, date_start, time_start, date_end, time_end, start_session_time, end_session_time)
-            Candles = TickConvertor.__seconds_to_N_seconds(Candles, N)
-            return Candles
+            candles = TickConvertor.__tick_to_seconds(file_path, date_start, time_start, date_end, time_end, start_session_time, end_session_time)
+            candles = TickConvertor.__seconds_to_N_seconds(candles, N)
+            return candles
         else:
             raise ValueError('N must be greater than 0')
     @staticmethod
@@ -408,11 +407,11 @@ class TickConvertor:
         if N == 1:
             return TickConvertor.__tick_to_trade_seconds(file_path,  date_start, time_start, date_end, time_end)
         elif N > 1:
-            Candles = TickConvertor.__tick_to_trade_seconds(file_path,  date_start, time_start, date_end, time_end)
-            Candles = TickConvertor.__candles_agg_N_trade_seconds(Candles, N)
-            Candles['wprice'] = Candles['weight_price'].copy()
-            Candles.drop(columns=['weight_price'], inplace=True)            
-            return Candles
+            candles = TickConvertor.__tick_to_trade_seconds(file_path, date_start, time_start, date_end, time_end)
+            candles = TickConvertor.__candles_agg_N_trade_seconds(candles, N)
+            candles['wprice'] = candles['weight_price'].copy()
+            candles.drop(columns=['weight_price'], inplace=True)
+            return candles
         else:
             raise ValueError('N must be greater than 0')
     
@@ -470,10 +469,10 @@ class TickConvertor:
         Функция преобразования тиковых данных в N-секундные свечи
         """
         if N > 0:    
-            Candles = TickConvertor.__tick_to_change_price_tick(file_path, date_start, time_start, date_end, time_end)
+            candles = TickConvertor.__tick_to_change_price_tick(file_path, date_start, time_start, date_end, time_end)
             
-            Candles = TickConvertor.__changed_tick_to_N_row_candles(Candles, N)
-            return Candles
+            candles = TickConvertor.__changed_tick_to_N_row_candles(candles, N)
+            return candles
         else:
             raise ValueError('N must be greater than 0')
         
@@ -485,17 +484,17 @@ class TickConvertor:
         end_datetime = dt.datetime.strptime(date_end + time_end, '%Y%m%d%H%M%S')
 
         # Read the file with ticks. The file must be in the root folder
-        Tiks = pd.read_csv(file_path)
-        Candles = pd.DataFrame()
+        tiks = pd.read_csv(file_path)
+        candles = pd.DataFrame()
 
         # Check the input dates for compliance with the dates of the tick file
-        temp_start_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].loc[0]) + str(Tiks['<TIME>'].loc[0]),
+        temp_start_datetime = dt.datetime.strptime(str(tiks['<DATE>'].loc[0]) + str(tiks['<TIME>'].loc[0]),
                                                    '%Y%m%d%H%M%S')
-        temp_end_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].iloc[-1]) + str(Tiks['<TIME>'].iloc[-1]),
+        temp_end_datetime = dt.datetime.strptime(str(tiks['<DATE>'].iloc[-1]) + str(tiks['<TIME>'].iloc[-1]),
                                                  '%Y%m%d%H%M%S')
 
         if (start_datetime > temp_end_datetime) or (end_datetime < temp_start_datetime):
-            return Candles
+            return candles
 
         if start_datetime < temp_start_datetime:
             start_datetime = temp_start_datetime
@@ -520,57 +519,57 @@ class TickConvertor:
         df['tick_count'] = 1
         
         # Create candles
-        Candles['date'] = df['date']
-        Candles['time'] = df['time']
-        Candles['timestamp'] = df['timestamp']
-        Candles['wprice'] = df['last'] * df['vol']
-        Candles['open'] = df['last']
-        Candles['high'] = df['last']
-        Candles['low'] = df['last']
-        Candles['close'] = df['last']
-        Candles['volume'] = df['vol']
-        Candles['buy_volume'] = df['vol'].where(df['oper'] == 'B')
-        Candles['sell_volume'] = df['vol'].where(df['oper'] == 'S')
-        Candles['buy_tick_count'] = df['tick_count'].where(df['oper'] == 'B')
-        Candles['sell_tick_count'] = df['tick_count'].where(df['oper'] == 'S')
-        Candles['tick_count'] = df['tick_count']
+        candles['date'] = df['date']
+        candles['time'] = df['time']
+        candles['timestamp'] = df['timestamp']
+        candles['wprice'] = df['last'] * df['vol']
+        candles['open'] = df['last']
+        candles['high'] = df['last']
+        candles['low'] = df['last']
+        candles['close'] = df['last']
+        candles['volume'] = df['vol']
+        candles['buy_volume'] = df['vol'].where(df['oper'] == 'B')
+        candles['sell_volume'] = df['vol'].where(df['oper'] == 'S')
+        candles['buy_tick_count'] = df['tick_count'].where(df['oper'] == 'B')
+        candles['sell_tick_count'] = df['tick_count'].where(df['oper'] == 'S')
+        candles['tick_count'] = df['tick_count']
 
         # Group candles by N tick
-        Candles = Candles.groupby(Candles.index // N).agg({'date': 'first', 'time': 'first', 'timestamp': 'first',
+        candles = candles.groupby(candles.index // N).agg({'date': 'first', 'time': 'first', 'timestamp': 'first',
                                                         'wprice': 'sum', 'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 
                                                         'volume': 'sum', 'buy_volume': 'sum', 'sell_volume': 'sum', 
                                                         'buy_tick_count': 'sum', 'sell_tick_count': 'sum', 'tick_count': 'sum'})    
         
 
         # Fill NaN values
-        Candles['buy_volume'].fillna(0, inplace=True)
-        Candles['sell_volume'].fillna(0, inplace=True)
-        Candles['buy_tick_count'].fillna(0, inplace=True)
-        Candles['sell_tick_count'].fillna(0, inplace=True)
+        candles['buy_volume'].fillna(0, inplace=True)
+        candles['sell_volume'].fillna(0, inplace=True)
+        candles['buy_tick_count'].fillna(0, inplace=True)
+        candles['sell_tick_count'].fillna(0, inplace=True)
         
         # Convert columns to ingeter
-        Candles['buy_volume'] = Candles['buy_volume'].astype(int)
-        Candles['sell_volume'] = Candles['sell_volume'].astype(int)
-        Candles['buy_tick_count'] = Candles['buy_tick_count'].astype(int)
-        Candles['sell_tick_count'] = Candles['sell_tick_count'].astype(int)
+        candles['buy_volume'] = candles['buy_volume'].astype(int)
+        candles['sell_volume'] = candles['sell_volume'].astype(int)
+        candles['buy_tick_count'] = candles['buy_tick_count'].astype(int)
+        candles['sell_tick_count'] = candles['sell_tick_count'].astype(int)
         
         # Calculate weighted average price
-        Candles['wprice'] = Candles['wprice'] / Candles['volume']
+        candles['wprice'] = candles['wprice'] / candles['volume']
 
-        Candles['is_trade_session'] = 1
+        candles['is_trade_session'] = 1
 
-        is_premarket = Candles['time'] < 100000
-        is_aftermarket = np.logical_and(Candles['time'] > 184500, Candles['time'] < 185000)
-        Candles.loc[(np.logical_or(is_premarket, is_aftermarket)), 'is_trade_session'] = 0
+        is_premarket = candles['time'] < 100000
+        is_aftermarket = np.logical_and(candles['time'] > 184500, candles['time'] < 185000)
+        candles.loc[(np.logical_or(is_premarket, is_aftermarket)), 'is_trade_session'] = 0
 
         # Reset index
-        #Candles.reset_index(drop=True, inplace=True)
+        #candles.reset_index(drop=True, inplace=True)
 
-        Candles = Candles [ ['date', 'time','timestamp', 'is_trade_session',
+        candles = candles [ ['date', 'time', 'timestamp', 'is_trade_session',
                     'wprice', 'open', 'high', 'low', 'close',
                     'volume', 'buy_volume', 'sell_volume', 'tick_count', 'buy_tick_count', 'sell_tick_count']]
 
-        Candles['date'] = Candles['date'].astype(int)
-        Candles['time'] = Candles['time'].astype(int)
+        candles['date'] = candles['date'].astype(int)
+        candles['time'] = candles['time'].astype(int)
         
-        return Candles
+        return candles
