@@ -16,8 +16,8 @@ def main():
     first = Convertor.tick_to_candles_N_seconds(file_path=file_path, date_start=date_start, time_start=time_start, date_end=date_end,time_end=time_end, N=1)
     first.to_csv('first.csv', index=False)
 
-    first = Convertor.tick_to_candles_N_seconds(file_path=file_path, date_start=date_start, time_start=time_start,date_end=date_end, time_end=time_end, N=10)
-    first.to_csv('first_10s.csv', index=False)
+    first = Convertor.tick_to_candles_N_seconds(file_path=file_path, date_start=date_start, time_start=time_start,date_end=date_end, time_end=time_end, N=20)
+    first.to_csv('first_20s.csv', index=False)
 
     # Use methods that convert tick to candles N trade second
     second = Convertor.tick_to_candles_N_trade_second(file_path=file_path, date_start=date_start, time_start=time_start, date_end=date_end,time_end=time_end, N=1)
