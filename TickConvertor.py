@@ -169,7 +169,7 @@ class TickConvertor:
         agg.loc[agg['volume'] == 0, 'buy_tick_count'] = 0
 
         agg['sell_tick_count'] = agg['sell_tick_count'].fillna(0).astype(int)
-        
+
         # Delete the wprice column
         #agg.drop(columns=['wprice'], inplace=True)
 
@@ -296,7 +296,7 @@ class TickConvertor:
             
         if start_datetime < temp_start_datetime:
             start_datetime = temp_start_datetime
-            
+        print('Ololo!')
         if end_datetime > temp_end_datetime:
             end_datetime = temp_end_datetime
 
@@ -479,35 +479,50 @@ class TickConvertor:
         
     #Write method that converts tick data to N tick candles    
     @classmethod
-    def tick_to_candles_N_tick(cls, file_path, date_start, time_start, date_end, time_end, N): 
-    
-        # Load tick data into a pandas DataFrame
+    def tick_to_candles_N_tick(cls, file_path, date_start, time_start, date_end, time_end, N):
+
         start_datetime = dt.datetime.strptime(date_start + time_start, '%Y%m%d%H%M%S')
         end_datetime = dt.datetime.strptime(date_end + time_end, '%Y%m%d%H%M%S')
-        
-        # Read tick data
+
+        # Read the file with ticks. The file must be in the root folder
         Tiks = pd.read_csv(file_path)
         Candles = pd.DataFrame()
-        
-        temp_start_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].loc[0]) + str(Tiks['<TIME>'].loc[0]), '%Y%m%d%H%M%S')
-        temp_end_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].iloc[-1]) + str(Tiks['<TIME>'].iloc[-1]), '%Y%m%d%H%M%S')
+
+        # Check the input dates for compliance with the dates of the tick file
+        temp_start_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].loc[0]) + str(Tiks['<TIME>'].loc[0]),
+                                                   '%Y%m%d%H%M%S')
+        temp_end_datetime = dt.datetime.strptime(str(Tiks['<DATE>'].iloc[-1]) + str(Tiks['<TIME>'].iloc[-1]),
+                                                 '%Y%m%d%H%M%S')
 
         if (start_datetime > temp_end_datetime) or (end_datetime < temp_start_datetime):
             return Candles
-                
+
         if start_datetime < temp_start_datetime:
             start_datetime = temp_start_datetime
-                
+
         if end_datetime > temp_end_datetime:
             end_datetime = temp_end_datetime
-        
+
         # Read the tick-by-tick data from the text file
         df = pd.read_csv(file_path, sep=',', names=['date', 'time', 'last', 'vol', 'id', 'oper'], header=0)
+
+        # Combine the date and time columns into a single timestamp column
+        df['timestamp'] = pd.to_datetime(df['date'].astype(str) + ' ' + df['time'].astype(str), format='%Y%m%d %H%M%S')
+
+        df = TickConvertor.__fill_time_series(df, start_datetime, end_datetime, 'S')
+        df = TickConvertor.__reset_tick_volumes(df)
+
+        df['wprice'] = df['last'] * df['vol']
+
+        # Convert the date and time columns to a single datetime column
+        df = df[(df['timestamp'] >= start_datetime) & (df['timestamp'] <= end_datetime)]
+
         df['tick_count'] = 1
         
         # Create candles
         Candles['date'] = df['date']
         Candles['time'] = df['time']
+        Candles['timestamp'] = df['timestamp']
         Candles['wprice'] = df['last'] * df['vol']
         Candles['open'] = df['last']
         Candles['high'] = df['last']
@@ -521,13 +536,13 @@ class TickConvertor:
         Candles['tick_count'] = df['tick_count']
 
         # Group candles by N tick
-        Candles = Candles.groupby(Candles.index // N).agg({'date': 'first', 'time': 'first', 
+        Candles = Candles.groupby(Candles.index // N).agg({'date': 'first', 'time': 'first', 'timestamp': 'first',
                                                         'wprice': 'sum', 'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 
                                                         'volume': 'sum', 'buy_volume': 'sum', 'sell_volume': 'sum', 
                                                         'buy_tick_count': 'sum', 'sell_tick_count': 'sum', 'tick_count': 'sum'})    
         
         # Combine the date and time columns into a single timestamp column
-        Candles['timestamp'] = pd.to_datetime(Candles['date'].astype(str) + ' ' + Candles['time'].astype(str), format='%Y%m%d %H%M%S')
+        #Candles['timestamp'] = pd.to_datetime(Candles['date'].astype(str) + ' ' + Candles['time'].astype(str), format='%Y%m%d %H%M%S')
         
         # Fill NaN values
 
@@ -552,12 +567,13 @@ class TickConvertor:
         Candles.loc[(np.logical_or(is_premarket, is_aftermarket)), 'is_trade_session'] = 0
 
         # Reset index
-        Candles.reset_index(drop=True, inplace=True)
+        #Candles.reset_index(drop=True, inplace=True)
 
         Candles = Candles [ ['date', 'time','timestamp', 'is_trade_session',
                     'wprice', 'open', 'high', 'low', 'close',
                     'volume', 'buy_volume', 'sell_volume', 'tick_count', 'buy_tick_count', 'sell_tick_count']]
 
-        
+        Candles['date'] = Candles['date'].astype(int)
+        Candles['time'] = Candles['time'].astype(int)
         
         return Candles
