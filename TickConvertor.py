@@ -296,7 +296,7 @@ class TickConvertor:
             
         if start_datetime < temp_start_datetime:
             start_datetime = temp_start_datetime
-        print('Ololo!')
+
         if end_datetime > temp_end_datetime:
             end_datetime = temp_end_datetime
 
@@ -541,11 +541,8 @@ class TickConvertor:
                                                         'volume': 'sum', 'buy_volume': 'sum', 'sell_volume': 'sum', 
                                                         'buy_tick_count': 'sum', 'sell_tick_count': 'sum', 'tick_count': 'sum'})    
         
-        # Combine the date and time columns into a single timestamp column
-        #Candles['timestamp'] = pd.to_datetime(Candles['date'].astype(str) + ' ' + Candles['time'].astype(str), format='%Y%m%d %H%M%S')
-        
-        # Fill NaN values
 
+        # Fill NaN values
         Candles['buy_volume'].fillna(0, inplace=True)
         Candles['sell_volume'].fillna(0, inplace=True)
         Candles['buy_tick_count'].fillna(0, inplace=True)
