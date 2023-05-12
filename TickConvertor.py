@@ -6,10 +6,8 @@ import numpy as np
 class TickConvertor:
     
     def __init__(self):
-        pass    
+        pass
 
-
-    
     # Write method to fill in the gaps time series
     @staticmethod
     def __fill_time_series(df, start, end, freq):
@@ -63,28 +61,27 @@ class TickConvertor:
                                        'wprice', 'open', 'high', 'low', 'close', 'weight_price', 
                                        'volume', 'buy_volume', 'sell_volume', 
                                        'tick_count', 'buy_tick_count', 'sell_tick_count'])
-        j = 0
+
         for i in range(0, len(df), N):
 
             if i + N > len(df):
                 N = len(df) - i - 1
 
-            row_value = {'date': df['date'][i], 'time': df['time'][i], 'timestamp': df['timestamp'][i], 'is_trade_session': df['is_trade_session'][i], 'change': df['change'][i],
+            row_value = {'date': df['date'][i], 'time': df['time'][i], 'timestamp': df['timestamp'][i], 'is_trade_session': df['is_trade_session'][i], 'change': df['change'][i:i+N].sum(),
                                 'wprice': df['wprice'][i:i+N].sum(), 'open': df['open'][i], 'high': df['high'][i:i+N].max(), 'low': df['low'][i:i+N].min(), 'close': df['close'][i+N], 'weight_price': df['weight_price'][i],
                                 'volume': df['volume'][i:i+N].sum(), 'buy_volume': df['buy_volume'][i:i+N].sum(), 'sell_volume': df['sell_volume'][i:i+N].sum(), 
                                 'tick_count': df['tick_count'][i:i+N].sum(), 'buy_tick_count': df['buy_tick_count'][i:i+N].sum(), 'sell_tick_count': df['sell_tick_count'][i:i+N].sum()}
 
             new_row = pd.Series(data=row_value, 
-                                index=['date', 'time', 'timestamp', 'is_trade_session', 'change'
+                                index=['date', 'time', 'timestamp', 'is_trade_session', 'change',
                                     'wprice', 'open','high', 'low', 'close', 'weight_price', 
                                     'volume', 'buy_volume','sell_volume', 
                                     'tick_count', 'buy_tick_count', 'sell_tick_count'])
             
             new_df = pd.concat([new_df, new_row.to_frame().T], ignore_index=True)
-            j += 1
+
 
         new_df['weight_price'] = new_df['wprice'] / new_df['volume']
-        #new_df.drop(columns=['wprice'], inplace=True)
         new_df.reset_index(drop=True, inplace=True)
 
         return new_df
@@ -169,7 +166,9 @@ class TickConvertor:
         # If volume is 0, then tick_count is 0
         agg.loc[agg['volume'] == 0, 'tick_count'] = 0
         agg.loc[agg['volume'] == 0, 'sell_tick_count'] = 0
-        agg.loc[agg['volume'] == 0, 'buy_tick_count'] = 0.
+        agg.loc[agg['volume'] == 0, 'buy_tick_count'] = 0
+
+        agg['sell_tick_count'] = agg['sell_tick_count'].fillna(0).astype(int)
         
         # Delete the wprice column
         #agg.drop(columns=['wprice'], inplace=True)
@@ -352,7 +351,10 @@ class TickConvertor:
         # If volume is 0, then tick_count is 0
         agg.loc[agg['volume'] == 0, 'tick_count'] = 0
         agg.loc[agg['volume'] == 0, 'sell_tick_count'] = 0
-        agg.loc[agg['volume'] == 0, 'buy_tick_count'] = 0.
+        agg.loc[agg['volume'] == 0, 'buy_tick_count'] = 0
+
+        agg['sell_tick_count'] = agg['sell_tick_count'].fillna(0).astype(int)
+
 
         # Delete the wprice column
         #agg.drop(columns=['wprice'], inplace=True)
@@ -379,6 +381,7 @@ class TickConvertor:
         agg['volume'] = agg['volume'].astype(int)
         agg['buy_volume'] = agg['buy_volume'].astype(int)
         agg['sell_volume'] = agg['sell_volume'].astype(int)
+        #agg['sell_tick_count'] = agg['sell_tick_count'].astype(int)
 
         agg = TickConvertor.__cut_lines(agg, start_session_time, end_session_time)    
         
