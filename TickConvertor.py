@@ -386,10 +386,9 @@ class TickConvertor:
                    'volume', 'buy_volume', 'sell_volume', 'tick_count', 'buy_tick_count', 'sell_tick_count']]
 
         # We bring the columns to the Int type
-
-        agg['volume'] = agg['volume'].astype(int)
-        agg['buy_volume'] = agg['buy_volume'].astype(int)
-        agg['sell_volume'] = agg['sell_volume'].astype(int)
+        agg['volume'] = agg['volume'].fillna(0).astype(int)
+        agg['buy_volume'] = agg['buy_volume'].fillna(0).astype(int)
+        agg['sell_volume'] = agg['sell_volume'].fillna(0).astype(int)
 
         agg = TickConvertor.__cut_lines(agg, start_session_time, end_session_time)
 
