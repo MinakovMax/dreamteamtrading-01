@@ -30,14 +30,14 @@ def main():
     third.to_csv('third.csv', index=False)
 
     third = сonvertor.tick_to_N_change_tick_candles(file_path=file_path, date_start=date_start, time_start=time_start, date_end=date_end, time_end=time_end, N=20)
-    third.to_csv('third_20s.csv', index=False)
+    third.to_csv('third_20t.csv', index=False)
 
     # Use methods that convert tick to candles N tick candles
     fourth = сonvertor.tick_to_candles_N_tick(file_path=file_path, date_start=date_start, time_start=time_start, date_end=date_end, time_end=time_end, N=1)
     fourth.to_csv('fourth.csv', index=False)
 
     fourth = сonvertor.tick_to_candles_N_tick(file_path=file_path, date_start=date_start, time_start=time_start, date_end=date_end, time_end=time_end, N=20)
-    fourth.to_csv('fourth_20s.csv', index=False)
+    fourth.to_csv('fourth_20t.csv', index=False)
 
 
 main()
